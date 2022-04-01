@@ -1,3 +1,4 @@
+
 .webcamCapture {
     position: relative;
     height: 100%;
@@ -23,3 +24,14 @@
     cursor: pointer;
     color: whitesmoke;
   }
+
+  .rectangle {
+    position: 'absolute';
+    background-color: transparent;
+    border: 2px solid white;
+    border-radius: 50px;
+    margin-top: 10%;
+    
+   
+    
+}

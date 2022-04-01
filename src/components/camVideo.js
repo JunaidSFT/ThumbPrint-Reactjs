@@ -2,6 +2,8 @@ import React from 'react';
 import Webcam from "react-webcam";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCirclePlay, faCircleStop, faCircleDown } from "@fortawesome/free-regular-svg-icons";
+import axios from "axios";
+import ReactLoading from "react-loading";
 
 import './style.css';
 
@@ -13,13 +15,23 @@ const videoConstraints = {
 
 const WebcamStreamCapture = () => {
    
+  var ROI_W = 0.33
+  var ROI_H = 0.35
 
+const LEFT_SPACE = 0.3     // in percentage
+const TOP_SPACE = 0.2      // in percentage
 
     
     const webcamRef = React.useRef(null);
     const mediaRecorderRef = React.useRef(null);
     const [capturing, setCapturing] = React.useState(false);
+    const [loading, setLoading] = React.useState(false);
     const [recordedChunks, setRecordedChunks] = React.useState([]);
+
+    const height = window.innerHeight;
+    const width = window.innerWidth;
+
+    console.log(height, width)
   
     const handleStartCaptureClick = React.useCallback(() => {
       setCapturing(true);
@@ -31,13 +43,76 @@ const WebcamStreamCapture = () => {
         handleDataAvailable
       );
       mediaRecorderRef.current.start();
+
+  
+      
+    }, [webcamRef, setCapturing, mediaRecorderRef]
+    
+    );
+
+    function setIntervalX(callback, delay, repetitions) {
+      var x = 0;
+      var intervalID = window.setInterval(function () {
+  
+         callback();
+  
+         if (++x === repetitions) {
+             window.clearInterval(intervalID);
+         }
+      }, delay);
+  }
+
+    const ImageCapture = React.useCallback( () => {
+      setLoading(true);
+         const arr = [];
+         var time = 0; 
+        setIntervalX(function () {
+          
+          const imageSrc = webcamRef.current.getScreenshot();
+          time = time +1;
+          console.log('image', imageSrc);
+          arr.push(imageSrc);
+          console.log("arr", arr)
+
+          if (time === 5 ){
+            axios({
+              method: "POST",
+              url: "http://192.168.0.168:7000/api/post/video",
+              headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json'
+              },
+              data: {
+                dims: [width, height, LEFT_SPACE, TOP_SPACE, ROI_W, ROI_H],
+                image: arr[2]
+              },
+            })
+              .then((response) => {
+                console.log(response);
+              })
+              .catch((error) => {
+                console.log(error);
+              });
+              setLoading(false);
+          
+          }
+          
+      }, 1000, 5);  
+       
+          
+      },
+      [webcamRef]
+    );
+
+    const limtedVideo = () => {
+      handleStartCaptureClick();
       setTimeout(() => {
         handleStopCaptureClick()
         console.log('recording stopped..')
-        // setRecord(false)
+        
     
-    }, 5000)
-    }, [webcamRef, setCapturing, mediaRecorderRef]);
+    }, 7000)
+    }
   
     const handleDataAvailable = React.useCallback(
       ({ data }) => {
@@ -47,6 +122,7 @@ const WebcamStreamCapture = () => {
       },
       [setRecordedChunks]
     );
+
   
     const handleStopCaptureClick = React.useCallback(() => {
       mediaRecorderRef.current.stop();
@@ -77,6 +153,7 @@ const WebcamStreamCapture = () => {
         audio={false}
         ref={webcamRef}
         videoConstraints={videoConstraints}
+        screenshotFormat="image/jpeg"
         style={{
           width: "100%",
           height: "100%",
@@ -88,7 +165,9 @@ const WebcamStreamCapture = () => {
         }}
         />
         </div>
+        
         {capturing ? (
+          
           <div className="webcamCapture">
           <div className="webcamCapture_button">
             <FontAwesomeIcon icon={faCircleStop} onClick={handleStopCaptureClick} size="3x" />
@@ -96,10 +175,20 @@ const WebcamStreamCapture = () => {
         </div>
           // <button onClick={handleStopCaptureClick}>Stop Capture</button>
         ) : (
+          <div>
+            
           <div className="webcamCapture">
-          <div className="webcamCapture_button">
-            <FontAwesomeIcon icon={faCirclePlay} onClick={handleStartCaptureClick} size="3x" />
+          {loading ? <div style = {{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)"}}>  
+          <ReactLoading width={100} type={"spinningBubbles"} color="#0083ca" />
+          </div>: <div className="webcamCapture_button">
+            <FontAwesomeIcon icon={faCirclePlay} onClick={ImageCapture} size="3x" />
           </div>
+            }
+          <div className="rectangle" style = {{height: height * ROI_H, width: width * ROI_W, marginLeft: `${LEFT_SPACE*100}%`, marginTop:`${TOP_SPACE*100}%` }}>
+            
+        </div>
+        </div>
+        
         </div>
           // <button onClick={handleStartCaptureClick}>Start Capture</button>
         )}
