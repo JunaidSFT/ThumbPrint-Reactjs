@@ -7,6 +7,7 @@ import { Routes, Route } from "react-router-dom";
 import Detail from "./components/detail/detail";
 import Hand from './components/hand/hand.js';
 import WebcamStreamCapture from "./components/camVideo";
+import Result from "./result";
 
 // function MyComponent() {
 //   const { loaded, cv } = useOpenCv();
@@ -328,6 +329,7 @@ const App = () => {
         <Route path="/" element={<Detail />} />
         <Route path="/hand" element={<Hand />} />
         <Route path="/webcam" element={<WebcamStreamCapture />} />
+        <Route path="/result" element={<Result />} />
       </Routes>
 </div>
 

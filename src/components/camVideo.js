@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCirclePlay, faCircleStop, faCircleDown } from "@fortawesome/free-regular-svg-icons";
 import axios from "axios";
 import ReactLoading from "react-loading";
-
+import { useNavigate } from "react-router-dom";
 import './style.css';
 
 const FACING_MODE_ENVIRONMENT = "environment";
@@ -13,7 +13,10 @@ const videoConstraints = {
     facingMode: FACING_MODE_ENVIRONMENT
   };
 
+
+
 const WebcamStreamCapture = () => {
+
    
   var ROI_W = 0.33
   var ROI_H = 0.35
@@ -32,6 +35,13 @@ const TOP_SPACE = 0.2      // in percentage
     const width = window.innerWidth;
 
     console.log(height, width)
+
+    let navigate = useNavigate(); 
+    const routeChange = () =>{ 
+      let path = `/result` ; 
+      navigate(path);
+        
+    }
   
     const handleStartCaptureClick = React.useCallback(() => {
       setCapturing(true);
@@ -50,6 +60,11 @@ const TOP_SPACE = 0.2      // in percentage
     
     );
 
+    function openInNewTab(url) {
+      var win = window.open("https://www.google.com", '_blank');
+      win.focus();
+    }
+
     function setIntervalX(callback, delay, repetitions) {
       var x = 0;
       var intervalID = window.setInterval(function () {
@@ -64,6 +79,7 @@ const TOP_SPACE = 0.2      // in percentage
 
     const ImageCapture = React.useCallback( () => {
       setLoading(true);
+      
          const arr = [];
          var time = 0; 
         setIntervalX(function () {
@@ -75,30 +91,40 @@ const TOP_SPACE = 0.2      // in percentage
           console.log("arr", arr)
 
           if (time === 5 ){
+            
+            
             axios({
               method: "POST",
-              url: "http://192.168.0.168:7000/api/post/video",
+              url: "/api/post/finger",
               headers: {
-                Accept: 'application/json',
+                'Accept': 'application/json',
                 'Content-Type': 'application/json'
+                
               },
               data: {
                 dims: [width, height, LEFT_SPACE, TOP_SPACE, ROI_W, ROI_H],
-                image: arr[2]
+                base64: arr[2]
               },
             })
               .then((response) => {
+                
                 console.log(response);
+                localStorage.setItem("resultData", response.data);
+              routeChange()
+                
               })
               .catch((error) => {
                 console.log(error);
+                
+
               });
               setLoading(false);
-          
+             
+              
           }
           
       }, 1000, 5);  
-       
+      
           
       },
       [webcamRef]
@@ -200,6 +226,7 @@ const TOP_SPACE = 0.2      // in percentage
         </div>
           
         )}
+        
       </>
     );
   };
